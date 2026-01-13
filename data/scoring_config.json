@@ -1,0 +1,235 @@
+{
+  "categories": {
+    "CRITICAL_BLEEDING": {
+      "score": 5.0,
+      "keywords": [
+        "bleeding",
+        "hemorrhage",
+        "hemorrhagic"
+      ],
+      "description": "Rizik krvarenja - životno ugrožavajuće"
+    },
+    "ANTICOAGULANT": {
+      "score": 5.0,
+      "keywords": [
+        "anticoagulant"
+      ],
+      "description": "Antikoagulantne interakcije"
+    },
+    "CARDIAC_QTc": {
+      "score": 4.5,
+      "keywords": [
+        "qtc",
+        "cardiotoxic",
+        "arrhythmogenic"
+      ],
+      "description": "Srčane aritmije - QTc prolongacija"
+    },
+    "ORGAN_TOXICITY": {
+      "score": 4.0,
+      "keywords": [
+        "nephrotoxic",
+        "hepatotoxic",
+        "neurotoxic"
+      ],
+      "description": "Oštećenje organa (bubrezi, jetra, nervi)"
+    },
+    "NEUROEXCITATORY": {
+      "score": 4.0,
+      "keywords": [
+        "neuroexcitatory",
+        "seizure",
+        "convulsion"
+      ],
+      "description": "Neuroekscitatorne reakcije - visok rizik"
+    },
+    "SEROTONERGIC": {
+      "score": 4.5,
+      "keywords": [
+        "serotonergic",
+        "serotonin",
+        "ssri",
+        "maoi",
+        "tramadol"
+      ],
+      "description": "Serotonergične interakcije - visok rizik sindroma"
+    },
+    "SERUM_LEVEL": {
+      "score": 3.0,
+      "keywords": [
+        "serum concentration",
+        "serum level",
+        "concentration of"
+      ],
+      "description": "Promjena koncentracije lijeka"
+    },
+    "METABOLISM": {
+      "score": 3.0,
+      "keywords": [
+        "metabolism",
+        "excretion",
+        "absorption"
+      ],
+      "description": "Uticaj na metabolizam lijeka"
+    },
+    "THERAPEUTIC": {
+      "score": 2.0,
+      "keywords": [
+        "therapeutic efficacy",
+        "therapeutic effect"
+      ],
+      "description": "Uticaj na efikasnost terapije"
+    },
+    "OTHER": {
+      "score": 1.0,
+      "keywords": [],
+      "description": "Ostale interakcije"
+    },
+    "ADVERSE_EFFECTS": {
+      "score": 3.5,
+      "keywords": [
+        "adverse effects",
+        "adverse reactions",
+        "side effects"
+      ],
+      "description": "Rizik od nuspojava"
+    },
+    "CARDIAC_OTHER": {
+      "score": 3.0,
+      "keywords": [
+        "cardiac",
+        "hypotensive",
+        "antihypertensive"
+      ],
+      "description": "Ostale srčane interakcije"
+    }
+  },
+  "statistics": {
+    "total_interactions": 222646,
+    "average_score": 2.945990496123892,
+    "high_risk_count": 16179,
+    "critical_risk_count": 4563
+  },
+  "top_risky_drugs": [
+    {
+      "drug_id": "DB12364",
+      "drug_name": "Betrixaban",
+      "avg_score": 5.0,
+      "interaction_count": 96
+    },
+    {
+      "drug_id": "DB00583",
+      "drug_name": "L-carnitine",
+      "avg_score": 5.0,
+      "interaction_count": 6
+    },
+    {
+      "drug_id": "DB04865",
+      "drug_name": "Omacetaxine mepesuccinate",
+      "avg_score": 4.919642857142857,
+      "interaction_count": 112
+    },
+    {
+      "drug_id": "DB06590",
+      "drug_name": "Ceftaroline fosamil",
+      "avg_score": 4.714285714285714,
+      "interaction_count": 7
+    },
+    {
+      "drug_id": "DB08994",
+      "drug_name": "Ditazole",
+      "avg_score": 4.704918032786885,
+      "interaction_count": 61
+    },
+    {
+      "drug_id": "DB00498",
+      "drug_name": "Phenindione",
+      "avg_score": 4.612048192771084,
+      "interaction_count": 415
+    },
+    {
+      "drug_id": "DB13136",
+      "drug_name": "Fluindione",
+      "avg_score": 4.612048192771084,
+      "interaction_count": 415
+    },
+    {
+      "drug_id": "DB00569",
+      "drug_name": "Fondaparinux sodium",
+      "avg_score": 4.593220338983051,
+      "interaction_count": 177
+    },
+    {
+      "drug_id": "DB11268",
+      "drug_name": "Protocatechualdehyde",
+      "avg_score": 4.587078651685394,
+      "interaction_count": 178
+    },
+    {
+      "drug_id": "DB09154",
+      "drug_name": "Sodium citrate",
+      "avg_score": 4.58659217877095,
+      "interaction_count": 179
+    },
+    {
+      "drug_id": "DB00974",
+      "drug_name": "Edetic acid",
+      "avg_score": 4.584269662921348,
+      "interaction_count": 178
+    },
+    {
+      "drug_id": "DB04272",
+      "drug_name": "Citric acid",
+      "avg_score": 4.584269662921348,
+      "interaction_count": 178
+    },
+    {
+      "drug_id": "DB00308",
+      "drug_name": "Ibutilide",
+      "avg_score": 4.5,
+      "interaction_count": 162
+    },
+    {
+      "drug_id": "DB00556",
+      "drug_name": "Perflutren",
+      "avg_score": 4.5,
+      "interaction_count": 156
+    },
+    {
+      "drug_id": "DB00743",
+      "drug_name": "Gadobenic acid",
+      "avg_score": 4.5,
+      "interaction_count": 156
+    },
+    {
+      "drug_id": "DB01599",
+      "drug_name": "Probucol",
+      "avg_score": 4.5,
+      "interaction_count": 5
+    },
+    {
+      "drug_id": "DB06402",
+      "drug_name": "Telavancin",
+      "avg_score": 4.484076433121019,
+      "interaction_count": 157
+    },
+    {
+      "drug_id": "DB06699",
+      "drug_name": "Degarelix",
+      "avg_score": 4.462025316455696,
+      "interaction_count": 79
+    },
+    {
+      "drug_id": "DB00266",
+      "drug_name": "Dicoumarol",
+      "avg_score": 4.457589285714286,
+      "interaction_count": 448
+    },
+    {
+      "drug_id": "DB00775",
+      "drug_name": "Tirofiban",
+      "avg_score": 4.442028985507246,
+      "interaction_count": 69
+    }
+  ]
+}

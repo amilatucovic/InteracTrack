@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Feedback primljen - InteracTrack{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-{{ feedback_info.color }}">
+                <div class="card-header bg-{{ feedback_info.color }} text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-{{ feedback_info.icon }}"></i> {{ feedback_info.title }}
+                    </h4>
+                </div>
+                
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="bi bi-{{ feedback_info.icon }}-fill text-{{ feedback_info.color }}" style="font-size: 5rem;"></i>
+                    </div>
+                    
+                    <h3 class="mb-3">{{ feedback_info.message }}</h3>
+                    
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-robot"></i> Efekat na agenta:</h5>
+                        <p class="mb-2">
+                            {% set threshold_float = threshold|default('3.0')|float %}
+                            {% if feedback_type == 'confirmed' %}
+                            <strong>Prag rizika je smanjen sa {{ "%.2f"|format(threshold_float) }} na {{ "%.2f"|format(threshold_float - 0.2) }}</strong><br>
+                            Agent će biti osjetljiviji na slične interakcije.
+                            {% elif feedback_type == 'false_alarm' %}
+                            <strong>Prag rizika je povećan sa {{ "%.2f"|format(threshold_float) }} na {{ "%.2f"|format(threshold_float + 0.5) }}</strong><br>
+                            Agent će biti manje osjetljiv kako bi izbjegao lažne uzbune.
+                            {% elif feedback_type == 'ignored' %}
+                            <strong>Prag rizika je blago povećan sa {{ "%.2f"|format(threshold_float) }} na {{ "%.2f"|format(threshold_float + 0.3) }}</strong><br>
+                            Agent će uzeti u obzir da se upozorenja ignorišu.
+                            {% else %}
+                            <strong>Agent je zabilježio vaš feedback</strong><br>
+                            Ovo će pomoći u poboljšanju tačnosti u budućnosti.
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    {% if therapy %}
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6><i class="bi bi-capsule-pill"></i> Terapija #{{ therapy.id }}</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Pacijent:</strong> {{ therapy.patient_id }}</p>
+                                    <p><strong>Lijekovi:</strong> {{ therapy.drug_count }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Potvrđena upozorenja:</strong> {{ therapy.confirmed_warnings_count|default(0) }}</p>
+                                    <p><strong>Lažne uzbune:</strong> {{ therapy.false_alarms_count|default(0) }}</p>
+                                    <p><strong>Ignorisanih:</strong> {{ therapy.ignored_warnings_count|default(0) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-5">
+                        {% if therapy %}
+                        <a href="/therapy/{{ therapy.id }}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-arrow-left"></i> Nazad na terapiju
+                        </a>
+                        {% endif %}
+                        
+                        <a href="/dashboard" class="btn btn-outline-secondary btn-lg ms-3">
+                            <i class="bi bi-speedometer"></i> Dashboard
+                        </a>
+                        
+                        <a href="/agent/status" class="btn btn-outline-info btn-lg ms-3">
+                            <i class="bi bi-robot"></i> Status agenta
+                        </a>
+                    </div>
+                    
+                    <div class="mt-4 text-muted small">
+                        <p><i class="bi bi-lightbulb"></i> <strong>Kako agent uči iz feedback-a:</strong></p>
+                        <ul class="text-start">
+                            <li>✅ <strong>Potvrđeno:</strong> Smanjuje prag rizika → agent postaje osjetljiviji</li>
+                            <li>⚠️ <strong>Lažna uzbuna:</strong> Povećava prag rizika → agent postaje manje osjetljiv</li>
+                            <li>🔕 <strong>Ignorisano:</strong> Blago povećava prag → agent uvažava vaše odluke</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="card-footer text-muted text-center">
+                    <small>
+                        <!-- FIX: Dodaj provjeru da li current_time postoji -->
+                        <i class="bi bi-clock"></i> Vrijeme: 
+                        {% if current_time is defined and current_time %}
+                            {{ current_time.strftime('%d.%m.%Y %H:%M:%S') }}
+                        {% else %}
+                            {{ now().strftime('%d.%m.%Y %H:%M:%S') if now is defined else '' }}
+                        {% endif %}
+                        | Agent prag: <strong>{{ "%.2f"|format(threshold|default('3.0')|float) }}</strong> |
+                        Feedback tip: <strong>{{ feedback_type|upper }}</strong>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Automatski refresh agent statusa
+    setTimeout(() => {
+        fetch('/api/agent/status', { method: 'GET' })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Agent status ažuriran:', data);
+            });
+    }, 2000);
+</script>
+{% endblock %}

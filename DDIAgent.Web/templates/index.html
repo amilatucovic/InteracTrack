@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ application }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
+            color: white;
+            padding: 80px 20px 60px;
+            margin-bottom: 40px;
+            border-radius: 0 0 30px 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.05)"/></svg>');
+            background-size: cover;
+        }
+        .architecture-display {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .architecture-step {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            padding: 12px 25px;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        .architecture-step:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+        }
+        .architecture-arrow {
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: bold;
+            align-self: center;
+            font-size: 1.2em;
+        }
+        .pill-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+        }
+        .badge-pill {
+            border-radius: 50px;
+            padding: 8px 16px;
+            font-weight: 600;
+        }
+        .disclaimer-alert {
+            border-left: 5px solid #dc3545;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero section -->
+        <div class="hero text-center">
+            <div class="pill-icon">💊</div>
+            <h1 class="display-4 fw-bold mb-3">InteracTrack</h1>
+            <p class="lead fs-4 mb-4">{{ description }}</p>
+            
+            <div class="architecture-display">
+                <span class="architecture-step">SENSE</span>
+                <span class="architecture-arrow">→</span>
+                <span class="architecture-step">THINK</span>
+                <span class="architecture-arrow">→</span>
+                <span class="architecture-step">ACT</span>
+                <span class="architecture-arrow">→</span>
+                <span class="architecture-step">LEARN</span>
+            </div>
+        </div>
+
+        <!-- Disclaimer sekcija -->
+        <div class="alert disclaimer-alert alert-light border mb-4">
+            <div class="d-flex">
+                <div class="me-3">
+                    <i class="bi bi-exclamation-triangle-fill text-danger fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="alert-heading text-danger">VAŽNO UPOZORENJE</h5>
+                    <p class="mb-1">
+                        <strong>Ova aplikacija je razvijena isključivo za edukativne svrhe predmeta "Umjetna inteligencija".</strong>
+                        Rezultati koje generira DDI Agent su simulacija i <strong>ne mogu zamijeniti profesionalnu medicinsku procjenu.</strong>
+                    </p>
+                    <p class="mb-0">
+                        Za stvarne provjere interakcija lijekova i kliničke odluke, <strong>konzultirajte kvalificiranog liječnika ili farmaceuta.</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Korisni savjeti -->
+        <div class="card mb-4 border-0 shadow-sm card-hover">
+            <div class="card-header bg-gradient-primary text-white border-0">
+                <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i> Najbolje prakse u farmakoterapiji</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3 mt-1">
+                                <span class="badge bg-primary rounded-circle p-2">1</span>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold text-primary">Redovne provjere</h6>
+                                <p class="small mb-0 text-muted">Sve terapije se automatski provjeravaju najmanje jednom dnevno. Sistem prati promjene i nove interakcije u realnom vremenu.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3 mt-1">
+                                <span class="badge bg-success rounded-circle p-2">2</span>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold text-success">Važnost feedbacka</h6>
+                                <p class="small mb-0 text-muted">Vaša povratna informacija omogućava sistemu da uči i poboljšava tačnost budućih procjena interakcija.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3 mt-1">
+                                <span class="badge bg-warning rounded-circle p-2">3</span>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold text-warning">Kritične kombinacije</h6>
+                                <p class="small mb-0 text-muted">Posebnu pažnju posvetite kombinacijama kao što su: Warfarin + NSAID, SSRI + MAOI, Digoxin + Diuretici, Benzodiazepini + Opioidi.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3 mt-1">
+                                <span class="badge bg-danger rounded-circle p-2">4</span>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold text-danger">Hitna stanja</h6>
+                                <p class="small mb-0 text-muted">CRITICAL upozorenja zahtijevaju neposrednu medicinsku intervenciju. Ne zanemarujte ove alarme.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- O DDI Agentu -->
+        <div class="card mb-4 border-0 shadow-sm card-hover">
+            <div class="card-body">
+                <h4 class="mb-4"><i class="bi bi-capsule-pill text-primary me-2"></i> O DDI Agentu</h4>
+                <p class="fs-5 text-muted mb-4">
+                    DDI (Drug-Drug Interaction) Agent je inteligentni sistem koji automatski detektuje i procjenjuje 
+                    rizik od interakcija između lijekova. Agent radi u kontinuiranim ciklusima:
+                </p>
+                
+                <div class="row g-4 mt-3">
+                    <div class="col-md-3">
+                        <div class="card h-100 border-primary border-2 card-hover">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <span class="badge bg-primary badge-pill">1</span>
+                                </div>
+                                <h5 class="text-primary fw-bold">SENSE</h5>
+                                <p class="small mb-0">Detektuje terapije koje zahtijevaju procjenu, prateći promjene i vremenske okvire.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card h-100 border-info border-2 card-hover">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <span class="badge bg-info badge-pill">2</span>
+                                </div>
+                                <h5 class="text-info fw-bold">THINK</h5>
+                                <p class="small mb-0">Analizira kombinacije lijekova i procjenjuje nivo rizika na osnovu dokazanih interakcija.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card h-100 border-success border-2 card-hover">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <span class="badge bg-success badge-pill">3</span>
+                                </div>
+                                <h5 class="text-success fw-bold">ACT</h5>
+                                <p class="small mb-0">Generira upozorenja ili preporuke sukladno utvrđenom nivou rizika.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card h-100 border-warning border-2 card-hover">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <span class="badge bg-warning badge-pill">4</span>
+                                </div>
+                                <h5 class="text-warning fw-bold">LEARN</h5>
+                                <p class="small mb-0">Uči iz povratnih informacija, prilagođavajući pragove i poboljšavajući tačnost.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-light border mt-4">
+                    <h6 class="fw-bold"><i class="bi bi-gear me-2"></i> Kako koristiti sistem:</h6>
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-6">
+                            <div class="text-center p-2">
+                                <div class="mb-2">
+                                    <i class="bi bi-file-plus-fill fs-4 text-success"></i>
+                                </div>
+                                <div class="small fw-bold">Kreirajte terapiju</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <div class="text-center p-2">
+                                <div class="mb-2">
+                                    <i class="bi bi-play-btn-fill fs-4 text-primary"></i>
+                                </div>
+                                <div class="small fw-bold">Pokrenite procjenu</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <div class="text-center p-2">
+                                <div class="mb-2">
+                                    <i class="bi bi-clipboard2-check-fill fs-4 text-info"></i>
+                                </div>
+                                <div class="small fw-bold">Pregledajte rezultate</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <div class="text-center p-2">
+                                <div class="mb-2">
+                                    <i class="bi bi-chat-left-text-fill fs-4 text-warning"></i>
+                                </div>
+                                <div class="small fw-bold">Dajte feedback</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brzo testiranje -->
+        <div class="card mb-4 border-warning border-2 card-hover">
+            <div class="card-body">
+                <h5 class="mb-3"><i class="bi bi-flask text-warning me-2"></i> Brzo testiranje sistema</h5>
+                <p class="text-muted mb-3">Želite vidjeti kako agent radi? Kreirajte test terapiju sa poznatim opasnim interakcijama:</p>
+                <form action="/api/test/create-sample" method="POST" class="d-inline-block">
+                    <button type="submit" class="btn btn-warning btn-lg px-4">
+                        <i class="bi bi-magic me-2"></i>Kreiraj test terapiju
+                    </button>
+                </form>
+                <small class="d-block mt-2 text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Ova terapija će uključivati Aspirin, Warfarin i Ibuprofen - kombinaciju sa poznatim kritičnim interakcijama.
+                </small>
+            </div>
+        </div>
+
+        <!-- Brze akcije -->
+        <div class="card mb-5 border-0 shadow">
+            <div class="card-header bg-white border-0 pb-0">
+                <h4 class="mb-3"><i class="bi bi-lightning-charge-fill text-primary me-2"></i> Brze akcije</h4>
+            </div>
+            <div class="card-body pt-0">
+                <div class="row g-3">
+                    <div class="col-lg-3 col-6">
+                        <a href="/therapy/create" class="btn btn-success w-100 py-3 d-flex flex-column align-items-center">
+                            <i class="bi bi-plus-circle-fill fs-3 mb-2"></i>
+                            <span>Nova terapija</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-6">
+                        <a href="/agent/status" class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center">
+                            <i class="bi bi-graph-up-arrow fs-3 mb-2"></i>
+                            <span>Status agenta</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-6">
+                        <form action="/agent/tick" method="POST" class="d-inline w-100">
+                            <button type="submit" class="btn btn-outline-success w-100 py-3 d-flex flex-column align-items-center">
+                                <i class="bi bi-play-circle-fill fs-3 mb-2"></i>
+                                <span>Pokreni tick</span>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-lg-3 col-6">
+                        <a href="/therapies" class="btn btn-outline-info w-100 py-3 d-flex flex-column align-items-center">
+                            <i class="bi bi-list-check fs-3 mb-2"></i>
+                            <span>Sve terapije</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-5 pt-4 pb-4 text-muted text-center border-top">
+            <div class="row align-items-center">
+                <div class="col-lg-8 text-lg-start">
+                    <p class="mb-1">
+                        <strong>InteracTrack DDI Agent</strong> • Inteligentni sistem za procjenu rizika interakcija lijekova
+                    </p>
+                    <p class="small mb-0">
+                        <span class="text-danger fw-bold">EDUKATIVNA SVRHA:</span> 
+                        Projekt iz predmeta "Umjetna inteligencija" • 
+                        <span class="text-muted">Ne koristiti za stvarne kliničke odluke</span>
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <div class="small">
+                        <div class="d-inline-block px-3 py-1 bg-light rounded">
+                            <i class="bi bi-server me-1"></i>
+                            <code>127.0.0.1:5000</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Dodaj animaciju za Sense→Think→Act→Learn pri hoveru
+        document.querySelectorAll('.architecture-step').forEach(step => {
+            step.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.1) translateY(-5px)';
+                this.style.background = 'rgba(255, 255, 255, 0.4)';
+            });
+            step.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+                this.style.background = '';
+            });
+        });
+        
+        // Smooth scroll za dugmiće
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

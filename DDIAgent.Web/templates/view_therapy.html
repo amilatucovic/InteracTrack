@@ -1,0 +1,487 @@
+{% extends "base.html" %}
+
+{% block title %}Terapija {{ therapy.id }} - InteracTrack{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Početna</a></li>
+                <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                <li class="breadcrumb-item active">Terapija {{ therapy.id }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Osnovne informacije -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="bi bi-info-circle"></i> Osnovne informacije</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>ID terapije:</th>
+                        <td>{{ therapy.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>ID pacijenta:</th>
+                        <td><strong>{{ therapy.patient_id }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            <span class="badge bg-{{ 'success' if therapy.status == 'ACTIVE' else 'secondary' }}">
+                                {{ therapy.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Broj lijekova:</th>
+                        <td><span class="badge bg-info">{{ therapy.drug_count }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Tolerancija rizika:</th>
+                        <td>{{ therapy.risk_tolerance }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agentova procjena -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div
+                class="card-header bg-{{ 'danger' if action == 'ESCALATE' else 'warning' if action == 'WARN' else 'info' if action == 'REQUEST_INFO' else 'success' }} text-white">
+                <h5><i class="bi bi-robot"></i> Agentova procjena</h5>
+            </div>
+            <div class="card-body">
+                {% if assessment %}
+                <div
+                    class="alert alert-{{ 'danger' if assessment.risk_level == 'CRITICAL' else 'warning' if assessment.risk_level == 'HIGH' else 'info' if assessment.risk_level == 'MODERATE' else 'success' }}">
+                    <h5>
+                        <i
+                            class="bi bi-{{ 'exclamation-triangle' if assessment.risk_level == 'CRITICAL' else 'exclamation-circle' if assessment.risk_level == 'HIGH' else 'info-circle' }}"></i>
+                        Rizik: <strong>{{ assessment.risk_level }}</strong>
+                    </h5>
+                    <p class="mb-1"><strong>Ukupni score:</strong> {{ "%.1f"|format(assessment.total_score) }}</p>
+                    <p class="mb-1"><strong>Broj interakcija:</strong> {{ assessment.interaction_count }}</p>
+                    <p class="mb-0"><strong>Kritične interakcije:</strong> {{ assessment.critical_count }}</p>
+                </div>
+
+                <div class="mt-3">
+                    <h6>Preporučena akcija:</h6>
+                    <span
+                        class="badge bg-{{ 'danger' if action == 'ESCALATE' else 'warning' if action == 'WARN' else 'info' if action == 'REQUEST_INFO' else 'success' }} p-2">
+                        {{ action }}
+                    </span>
+
+                    {% if warning %}
+                    <div class="mt-3">
+                        <h6>Upozorenje:</h6>
+                        <div class="alert alert-warning">
+                            {{ warning.message }}
+                            {% if warning.suggestions %}
+                            <ul class="mt-2 mb-0">
+                                {% for suggestion in warning.suggestions %}
+                                <li>{{ suggestion }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="alert alert-secondary">
+                    <p class="mb-0"><i class="bi bi-clock"></i> Terapija još nije procjenjena.</p>
+                </div>
+                <form action="/api/agent/tick" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-play-circle"></i> Pokreni procjenu
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dodaj ovo ispod "Agentova procjena" kartice: -->
+
+<!-- Feedback statistike -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="bi bi-graph-up"></i> Feedback statistike za ovu terapiju</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="p-3 bg-success bg-opacity-10 rounded">
+                            <h5 id="confirmedCount">{{ therapy.confirmed_warnings_count if therapy.confirmed_warnings_count is defined else 0 }}</h5>
+                            <small class="text-muted">Potvrđena upozorenja</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 bg-danger bg-opacity-10 rounded">
+                            <h5 id="falseAlarmCount">{{ therapy.false_alarms_count if therapy.false_alarms_count is defined else 0 }}</h5>
+                            <small class="text-muted">Lažne uzbune</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 bg-warning bg-opacity-10 rounded">
+                            <h5 id="ignoredCount">{{ therapy.ignored_warnings_count }}</h5>
+                            <small class="text-muted">Ignorisana upozorenja</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Agentov prag -->
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="bi bi-sliders"></i> 
+                        Trenutni prag agenta: 
+                        <span id="agentThreshold">Učitavanje...</span>
+                        <button class="btn btn-sm btn-outline-info ms-2" onclick="refreshAgentStats()">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista lijekova -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-capsule"></i> Lijekovi u terapiji</h5>
+            </div>
+            <div class="card-body">
+                {% if therapy.drugs %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>ID lijeka</th>
+                                <th>Naziv</th>
+                                <th>Doza</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for drug in therapy.drugs %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td><code>{{ drug.drug_id }}</code></td>
+                                <td><strong>{{ drug.name }}</strong></td>
+                                <td>{{ drug.dosage }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">Nema lijekova u ovoj terapiji.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Historija procjena -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-clock-history"></i> Historija procjena</h5>
+            </div>
+            <div class="card-body">
+                {% if therapy.risk_history %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Vrijeme</th>
+                                <th>Rizik</th>
+                                <th>Score</th>
+                                <th>Interakcije</th>
+                                <th>Akcija</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for history in therapy.risk_history|reverse %}
+                            <tr>
+                                <td>
+                                    {% if history.timestamp %}
+                                    {{ history.timestamp.split('T')[0] }} {{ history.timestamp.split('T')[1][:8] }}
+                                    {% elif history.assessment_time %}
+                                    {{ history.assessment_time.split('T')[0] }} {{
+                                    history.assessment_time.split('T')[1][:8] }}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge bg-{{ 'danger' if history.risk_level == 'CRITICAL' else 'warning' if history.risk_level == 'HIGH' else 'info' if history.risk_level == 'MODERATE' else 'success' if history.risk_level == 'LOW' else 'secondary' }}">
+                                        {{ history.risk_level if history.risk_level else 'N/A' }}
+                                    </span>
+                                </td>
+                                <td>{{ "%.1f"|format(history.total_score) if history.total_score else '0.0' }}</td>
+                                <td>{{ history.interaction_count if history.interaction_count else 0 }}</td>
+                                <td>
+                                    <span
+                                        class="badge bg-{{ 'danger' if history.action_taken == 'ESCALATE' else 'warning' if history.action_taken == 'WARN' else 'info' if history.action_taken == 'REQUEST_INFO' else 'success' }}">
+                                        {{ history.action_taken if history.action_taken else 'N/A' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">Nema historije procjena za ovu terapiju.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feedback forma -->
+{% if warning %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-chat-left-text"></i> Feedback</h5>
+            </div>
+            <div class="card-body">
+                <p>Da li je ovo upozorenje bilo korisno?</p>
+                <form id="feedbackForm">
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="feedback" id="feedback_yes" value="confirmed"
+                            autocomplete="off">
+                        <label class="btn btn-outline-success" for="feedback_yes">
+                            <i class="bi bi-check-circle"></i> Da, potvrđujem
+                        </label>
+
+                        <input type="radio" class="btn-check" name="feedback" id="feedback_no" value="false_alarm"
+                            autocomplete="off">
+                        <label class="btn btn-outline-danger" for="feedback_no">
+                            <i class="bi bi-x-circle"></i> Ne, lažna uzbuna
+                        </label>
+
+                        <input type="radio" class="btn-check" name="feedback" id="feedback_ignore" value="ignored"
+                            autocomplete="off">
+                        <label class="btn btn-outline-warning" for="feedback_ignore">
+                            <i class="bi bi-eye-slash"></i> Ignorišem
+                        </label>
+                    </div>
+
+                    <div class="mt-3" id="notesSection" style="display: none;">
+                        <label for="feedbackNotes" class="form-label">Dodatne napomene:</label>
+                        <textarea class="form-control" id="feedbackNotes" rows="2"
+                            placeholder="Opcionalno..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary mt-3" disabled id="submitFeedback">
+                        <i class="bi bi-send"></i> Pošalji feedback
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Akcije -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-gear"></i> Akcije</h5>
+            </div>
+            <div class="card-body">
+                <div class="btn-group" role="group">
+                    <a href="/dashboard" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Nazad na dashboard
+                    </a>
+
+                    <!-- DODAJTE OVO DVA NOVA DUGMETA -->
+                    <form action="/agent/tick?therapy_id={{ therapy.id }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-primary ms-2">
+                            <i class="bi bi-speedometer"></i> Procjeni ovu terapiju
+                        </button>
+                    </form>
+
+                    <form action="/agent/tick" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-success ms-2">
+                            <i class="bi bi-play-circle"></i> Novi tick (sve terapije)
+                        </button>
+                    </form>
+
+                    {% if action == 'ESCALATE' %}
+                    <button class="btn btn-danger ms-2" onclick="alert('Simulacija: Slanje email-a ljekaru...')">
+                        <i class="bi bi-envelope"></i> Kontaktiraj ljekara
+                    </button>
+                    {% endif %}
+                </div>
+                
+                <!-- DODAJTE OVAJ MALI TEKST ISPOD -->
+                <div class="mt-3">
+                    <small class="text-muted">
+                        • <strong>Procjeni ovu terapiju:</strong> Analizira SAMO trenutnu terapiju<br>
+                        • <strong>Novi tick (sve terapije):</strong> Analizira prvu terapiju u redu čekanja
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Feedback forma - NOVA VERZIJA
+    document.querySelectorAll('input[name="feedback"]').forEach(radio => {
+        radio.addEventListener('change', function () {
+            document.getElementById('notesSection').style.display = 'block';
+            document.getElementById('submitFeedback').disabled = false;
+        });
+    });
+
+    document.getElementById('feedbackForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const feedback = document.querySelector('input[name="feedback"]:checked');
+        const notes = document.getElementById('feedbackNotes').value;
+
+        if (!feedback) {
+            alert('Molimo odaberite feedback opciju');
+            return;
+        }
+
+        // Pripremi data za slanje
+        const data = {
+            feedback_type: feedback.value,
+            therapy_id: "{{ therapy.id }}",
+            notes: notes
+        };
+
+        // Loading state
+        const submitBtn = document.getElementById('submitFeedback');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Slanje...';
+        submitBtn.disabled = true;
+
+        try {
+            // Pošalji feedback preko NOVOG endpointa
+            const response = await fetch('/api/feedback/submit', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                if (result.status === 'success') {
+                    // Prikaži detaljnu poruku
+                    const message = result.message;
+                    const thresholdChange = result.agent_learning?.threshold_change;
+                    
+                    let alertMessage = message;
+                    if (thresholdChange !== undefined) {
+                        if (thresholdChange > 0) {
+                            alertMessage += `\n\nPrag je povećan za ${thresholdChange.toFixed(2)}. Agent će biti manje osjetljiv.`;
+                        } else if (thresholdChange < 0) {
+                            alertMessage += `\n\nPrag je smanjen za ${Math.abs(thresholdChange).toFixed(2)}. Agent će biti osjetljiviji.`;
+                        }
+                    }
+                    
+                    alert(alertMessage);
+                    
+                    // Redirect na success stranicu
+                    window.location.href = `/feedback/success?type=${feedback.value}&therapy_id={{ therapy.id }}`;
+                } else {
+                    alert(result.message || 'Feedback je primljen, ali sa ograničenim efektom.');
+                    location.reload();
+                }
+            } else {
+                alert('Greška pri slanju feedback-a: ' + (result.message || 'Nepoznata greška'));
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+            
+        } catch (error) {
+            alert('Greška pri slanju feedback-a: ' + error.message);
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Učitaj feedback statistike
+    async function loadFeedbackStats() {
+        try {
+            const response = await fetch(`/api/therapy/{{ therapy.id }}/feedback`);
+            const result = await response.json();
+            
+            if (response.ok && result.stats) {
+                // Možeš prikazati statistike negdje na stranici
+                console.log('Feedback stats:', result.stats);
+                
+                // Ako želiš prikazati u HTML-u, dodaj div:
+                /*
+                <div id="feedbackStats" class="mt-3" style="display: none;">
+                    <h6>Feedback statistike:</h6>
+                    <p>Potvrđeno: <span id="confirmedCount">0</span></p>
+                    <p>Lažne uzbune: <span id="falseAlarmCount">0</span></p>
+                    <p>Ignorisano: <span id="ignoredCount">0</span></p>
+                </div>
+                */
+            }
+        } catch (error) {
+            console.log('Nije moguće učitati feedback statistike:', error);
+        }
+    }
+
+    // Pozovi na učitavanju stranice
+    window.addEventListener('DOMContentLoaded', function() {
+        if ("{{ therapy.id }}") {
+            loadFeedbackStats();
+        }
+    });
+
+    async function refreshAgentStats() {
+    try {
+        const response = await fetch('/api/agent/learning/status');
+        const result = await response.json();
+        
+        if (response.ok && result.learning) {
+            document.getElementById('agentThreshold').textContent = 
+                result.learning.adaptive_threshold.toFixed(2);
+        }
+    } catch (error) {
+        console.log('Greška pri učitavanju agent statistika:', error);
+    }
+}
+
+// Učitaj na početku
+refreshAgentStats();
+</script>
+{% endblock %}

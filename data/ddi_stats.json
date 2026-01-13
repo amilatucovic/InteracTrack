@@ -1,0 +1,69 @@
+{
+  "total_interactions": 222646,
+  "unique_drugs": 1868,
+  "interaction_types": 114,
+  "top_interactions": {
+    "risk or severity of adverse effects": 62767,
+    "metabolism": 42811,
+    "serum concentration": 39244,
+    "therapeutic efficacy": 12807,
+    "hypotensive activities": 10051,
+    "QTc-prolonging activities": 5837,
+    "antihypertensive activities": 5638,
+    "central nervous system depressant (CNS depressant) activities": 5279,
+    "anticoagulant activities": 4344,
+    "vasoconstricting activities": 2577,
+    "hypoglycemic activities": 2461,
+    "risk or severity of hypotension": 1840,
+    "sedative activities": 1740,
+    "hypokalemic activities": 1561,
+    "absorption": 1522,
+    "orthostatic hypotensive activities": 1514,
+    "bradycardic activities": 1452,
+    "neuroexcitatory activities": 1392,
+    "cardiotoxic activities": 1286,
+    "excretion rate of higher serum level": 1284
+  },
+  "top_drugs": {
+    "DB01118": {
+      "name": "Amiodarone",
+      "interaction_count": 1034
+    },
+    "DB01149": {
+      "name": "Nefazodone",
+      "interaction_count": 990
+    },
+    "DB01174": {
+      "name": "Phenobarbital",
+      "interaction_count": 983
+    },
+    "DB00285": {
+      "name": "Venlafaxine",
+      "interaction_count": 970
+    },
+    "DB00794": {
+      "name": "Primidone",
+      "interaction_count": 955
+    },
+    "DB00252": {
+      "name": "Phenytoin",
+      "interaction_count": 939
+    },
+    "DB00176": {
+      "name": "Fluvoxamine",
+      "interaction_count": 934
+    },
+    "DB00564": {
+      "name": "Carbamazepine",
+      "interaction_count": 931
+    },
+    "DB11672": {
+      "name": "Curcumin",
+      "interaction_count": 928
+    },
+    "DB00246": {
+      "name": "Ziprasidone",
+      "interaction_count": 922
+    }
+  }
+}

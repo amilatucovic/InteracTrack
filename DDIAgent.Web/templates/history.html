@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+
+{% block title %}Historija - DDI Agent{% endblock %}
+
+{% block content %}
+<style>
+/* ===== INLINE STILOVI ZA HISTORIJU ===== */
+.history-row {
+    transition: all 0.3s ease;
+}
+
+.history-row:hover {
+    background-color: #f8f9fa !important;
+    transform: translateX(2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.badge-escalate { background-color: #dc3545 !important; color: white !important; }
+.badge-warn { background-color: #ffc107 !important; color: #000 !important; }
+.badge-info { background-color: #0dcaf0 !important; color: white !important; }
+.badge-inform { background-color: #198754 !important; color: white !important; }
+.badge-secondary { background-color: #6c757d !important; color: white !important; }
+
+.badge-critical { background-color: #dc3545 !important; color: white !important; }
+.badge-high { background-color: #fd7e14 !important; color: white !important; }
+.badge-moderate { background-color: #0dcaf0 !important; color: white !important; }
+.badge-low { background-color: #198754 !important; color: white !important; }
+.badge-none { background-color: #6c757d !important; color: white !important; }
+
+.filter-active {
+    border-left: 4px solid #0d6efd !important;
+    background-color: #e7f1ff !important;
+}
+
+.btn-outline-primary {
+    border-color: #0d6efd;
+    color: #0d6efd;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-primary:hover {
+    background-color: #0d6efd;
+    color: white;
+    transform: translateY(-1px);
+}
+
+#historyTable th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+}
+
+#historyTable td {
+    vertical-align: middle;
+    padding: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.25em 0.5em;
+    }
+    
+    .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+</style>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2><i class="bi bi-clock-history"></i> Historija agenta</h2>
+        <p class="text-muted">Pregled svih agentovih tick-ova i akcija</p>
+    </div>
+</div>
+
+<!-- Statistike historije -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-activity"></i> Ukupno tick-ova</h5>
+                <h2 class="card-text">{{ total_count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-exclamation-triangle"></i> Eskalacije</h5>
+                <h2 class="card-text">{{ stats.escalate_count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-calendar3"></i> Posljednji tick</h5>
+                <h6 class="card-text">
+                    {% if history_items|length > 0 %}
+                        {{ history_items[0].timestamp|format_datetime if history_items[0].timestamp else 'Nepoznato' }}
+                    {% else %}
+                        Nikad
+                    {% endif %}
+                </h6>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtriranje -->
+<div class="card mb-4 border-primary">
+    <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="bi bi-funnel"></i> Filteri</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Pacijent</label>
+                <select class="form-select border-primary" id="filterPatient">
+                    <option value="">Svi pacijenti</option>
+                    {% for patient in stats.patients|sort %}
+                    <option value="{{ patient }}">{{ patient }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Akcija</label>
+                <select class="form-select border-warning" id="filterAction">
+                    <option value="">Sve akcije</option>
+                    <option value="ESCALATE">🚨 Eskalacije</option>
+                    <option value="WARN">⚠️ Upozorenja</option>
+                    <option value="REQUEST_INFO">❓ Zahtjevi za info</option>
+                    <option value="INFORM">ℹ️ Informacije</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Nivo rizika</label>
+                <select class="form-select border-danger" id="filterRisk">
+                    <option value="">Svi nivoi</option>
+                    <option value="CRITICAL">🔴 Kritičan</option>
+                    <option value="HIGH">🟠 Visok</option>
+                    <option value="MODERATE">🔵 Umjeren</option>
+                    <option value="LOW">🟢 Nizak</option>
+                    <option value="NONE">⚫ Nema</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+                    <i class="bi bi-arrow-clockwise"></i> Resetuj filtere
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela historije -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-list-ul"></i> Historija tick-ova</h5>
+        <div>
+            <span class="badge bg-secondary me-2" id="filteredCount">{{ history_items|length }}</span>
+            <span class="badge bg-light text-dark">
+                Prikazano: <span id="shownCount">{{ history_items|length }}</span>/{{ total_count }}
+            </span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if history_items %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="historyTable">
+                <thead>
+                    <tr>
+                        <th width="15%">Vrijeme</th>
+                        <th width="15%">Pacijent</th>
+                        <th width="10%">Terapija ID</th>
+                        <th width="10%">Interakcije</th>
+                        <th width="15%">Nivo rizika</th>
+                        <th width="15%">Akcija</th>
+                        <th width="20%">Detalji</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in history_items %}
+                    <tr class="history-row" 
+                        data-patient="{{ item.patient_id }}"
+                        data-action="{{ item.action_taken }}"
+                        data-risk="{{ item.risk_level }}"
+                        onclick="showRowDetails(this)">
+                        <td>
+                            <small class="text-muted">{{ item.timestamp|format_datetime if item.timestamp else 'Nepoznato' }}</small>
+                        </td>
+                        <td>
+                            <strong class="text-primary">{{ item.patient_id }}</strong>
+                        </td>
+                        <td>
+                            <a href="/therapy/{{ item.therapy_id }}" class="badge bg-secondary text-decoration-none">
+                                <i class="bi bi-capsule"></i> #{{ item.therapy_id }}
+                            </a>
+                        </td>
+                        <td>
+                            {% set int_count = item.interaction_count|int %}
+                            {% if int_count >= 3 %}
+                            <span class="badge bg-danger">{{ int_count }} 🔥</span>
+                            {% elif int_count >= 1 %}
+                            <span class="badge bg-warning">{{ int_count }} ⚠️</span>
+                            {% else %}
+                            <span class="badge bg-success">{{ int_count }} ✓</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.risk_level == 'CRITICAL' %}
+                            <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> KRITIČAN</span>
+                            {% elif item.risk_level == 'HIGH' %}
+                            <span class="badge bg-warning"><i class="bi bi-exclamation-circle"></i> VISOK</span>
+                            {% elif item.risk_level == 'MODERATE' %}
+                            <span class="badge bg-info"><i class="bi bi-info-circle"></i> UMJEREN</span>
+                            {% elif item.risk_level == 'LOW' %}
+                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> NIZAK</span>
+                            {% elif item.risk_level == 'NONE' %}
+                            <span class="badge bg-secondary"><i class="bi bi-dash-circle"></i> NEMA</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ item.risk_level }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.action_taken == 'ESCALATE' %}
+                            <span class="badge bg-danger">
+                                <i class="bi bi-exclamation-triangle-fill"></i> Eskalacija
+                            </span>
+                            {% elif item.action_taken == 'WARN' %}
+                            <span class="badge bg-warning">
+                                <i class="bi bi-exclamation-circle-fill"></i> Upozorenje
+                            </span>
+                            {% elif item.action_taken == 'REQUEST_INFO' %}
+                            <span class="badge bg-info">
+                                <i class="bi bi-question-circle-fill"></i> Zahtjev
+                            </span>
+                            {% elif item.action_taken == 'INFORM' %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-info-circle-fill"></i> Informacija
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ item.action_taken }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" 
+                                        onclick="event.stopPropagation(); showDetails('{{ item.patient_id }}', '{{ item.therapy_id }}', '{{ item.action_taken }}', '{{ item.interaction_count }}', '{{ item.risk_level }}')">
+                                    <i class="bi bi-zoom-in"></i> Detalji
+                                </button>
+                                <a href="/therapy/{{ item.therapy_id }}" class="btn btn-outline-success"
+                                   onclick="event.stopPropagation()">
+                                    <i class="bi bi-eye"></i> Pregled
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-clock text-muted" style="font-size: 4rem;"></i>
+            <h4 class="mt-3 text-muted">Nema historije</h4>
+            <p class="text-muted">Agent još nije pokrenut niti jedan tick</p>
+            <div class="mt-3">
+                <a href="/agent/tick" class="btn btn-primary me-2">
+                    <i class="bi bi-play-circle"></i> Pokreni prvi tick
+                </a>
+                <a href="/dashboard" class="btn btn-outline-secondary">
+                    <i class="bi bi-speedometer2"></i> Nazad na dashboard
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal za detalje -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Detalji tick-a</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent">
+                    <!-- Sadržaj će biti popunjen JavaScript-om -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Zatvori
+                </button>
+                <button type="button" class="btn btn-primary" id="viewTherapyBtn">
+                    <i class="bi bi-eye"></i> Pregled terapije
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Globalne varijable
+let currentTherapyId = null;
+let historyItems = JSON.parse(`{{ history_items|tojson|safe }}`);
+
+// Klik na red otvara detalje
+function showRowDetails(row) {
+    const patientId = row.getAttribute('data-patient');
+    const therapyId = row.querySelector('a[href^="/therapy/"]').href.split('/').pop();
+    const action = row.getAttribute('data-action');
+    const risk = row.getAttribute('data-risk');
+    const interactionBadge = row.querySelector('td:nth-child(4) .badge');
+    const interactions = interactionBadge ? interactionBadge.textContent.replace(/[^0-9]/g, '') : '0';
+    
+    showDetails(patientId, therapyId, action, interactions, risk);
+}
+
+// Prikaži detalje u modal-u
+function showDetails(patientId, therapyId, action, interactions, risk) {
+    currentTherapyId = therapyId;
+    
+    const modalContent = document.getElementById('modalContent');
+    const actionColors = {
+        'ESCALATE': 'danger',
+        'WARN': 'warning', 
+        'REQUEST_INFO': 'info',
+        'INFORM': 'success'
+    };
+    
+    const riskColors = {
+        'CRITICAL': 'danger',
+        'HIGH': 'warning',
+        'MODERATE': 'info',
+        'LOW': 'success',
+        'NONE': 'secondary'
+    };
+    
+    const detailsHtml = `
+        <div class="mb-3">
+            <h6><i class="bi bi-person"></i> Pacijent</h6>
+            <p class="fs-5 fw-bold text-primary">${patientId}</p>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h6><i class="bi bi-capsule"></i> Terapija ID</h6>
+                <p><span class="badge bg-secondary">#${therapyId}</span></p>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="bi bi-activity"></i> Interakcije</h6>
+                <p><span class="badge ${interactions >= 3 ? 'bg-danger' : interactions >= 1 ? 'bg-warning' : 'bg-success'} fs-6">${interactions}</span></p>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h6><i class="bi bi-shield-exclamation"></i> Nivo rizika</h6>
+                <p><span class="badge bg-${riskColors[risk] || 'secondary'}">${risk}</span></p>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="bi bi-gear"></i> Akcija</h6>
+                <p><span class="badge bg-${actionColors[action] || 'secondary'}">${action}</span></p>
+            </div>
+        </div>
+        
+        <div class="alert alert-light border">
+            <i class="bi bi-info-circle text-primary"></i>
+            Za potpune detalje o interakcijama i preporukama, pregledajte terapiju.
+        </div>
+    `;
+    
+    modalContent.innerHTML = detailsHtml;
+    document.getElementById('modalTitle').textContent = `Detalji tick-a - ${patientId}`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    modal.show();
+}
+
+// Filteri
+function applyFilters() {
+    const patientFilter = document.getElementById('filterPatient').value;
+    const actionFilter = document.getElementById('filterAction').value;
+    const riskFilter = document.getElementById('filterRisk').value;
+    
+    const rows = document.querySelectorAll('.history-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const patient = row.getAttribute('data-patient');
+        const action = row.getAttribute('data-action');
+        const risk = row.getAttribute('data-risk');
+        
+        const showPatient = !patientFilter || patient === patientFilter;
+        const showAction = !actionFilter || action === actionFilter;
+        const showRisk = !riskFilter || risk === riskFilter;
+        
+        const shouldShow = showPatient && showAction && showRisk;
+        
+        if (shouldShow) {
+            row.style.display = '';
+            row.classList.remove('filter-active');
+            visibleCount++;
+            
+            if (patientFilter === patient || actionFilter === action || riskFilter === risk) {
+                row.classList.add('filter-active');
+            }
+        } else {
+            row.style.display = 'none';
+            row.classList.remove('filter-active');
+        }
+    });
+    
+    const filteredCountBadge = document.getElementById('filteredCount');
+    const shownCountSpan = document.getElementById('shownCount');
+    
+    shownCountSpan.textContent = visibleCount;
+    filteredCountBadge.textContent = visibleCount;
+    
+    if (visibleCount === 0) {
+        filteredCountBadge.className = 'badge bg-danger';
+    } else if (visibleCount < rows.length) {
+        filteredCountBadge.className = 'badge bg-warning';
+    } else {
+        filteredCountBadge.className = 'badge bg-secondary';
+    }
+}
+
+function resetFilters() {
+    document.getElementById('filterPatient').value = '';
+    document.getElementById('filterAction').value = '';
+    document.getElementById('filterRisk').value = '';
+    applyFilters();
+}
+
+// Inicijalizuj filtere
+document.addEventListener('DOMContentLoaded', function() {
+    // Postavi dugme za pregled terapije u modalu
+    document.getElementById('viewTherapyBtn').addEventListener('click', function() {
+        if (currentTherapyId) {
+            window.location.href = `/therapy/${currentTherapyId}`;
+        }
+    });
+    
+    // Inicijalizuj filtere
+    document.getElementById('filterPatient').addEventListener('change', applyFilters);
+    document.getElementById('filterAction').addEventListener('change', applyFilters);
+    document.getElementById('filterRisk').addEventListener('change', applyFilters);
+    
+    // Inicijalni prikaz
+    applyFilters();
+});
+</script>
+{% endblock %}
