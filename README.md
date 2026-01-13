@@ -93,7 +93,7 @@ Each record receives:
 - Numerical `risk_score`
 - Semantic `risk_category`
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **Python 3.12** - Core implementation language
 - **Flask** - Web framework (presentation layer only)
@@ -103,7 +103,7 @@ Each record receives:
 - **Bootstrap 5** - Responsive design
 - **JavaScript** - Client-side interactivity
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -137,7 +137,7 @@ http://localhost:5000
 
 The SQLite database is automatically created and used locally - no additional database configuration required.
 
-## 📈 Future Enhancements
+## Future Enhancements
 
 ### Short-term
 - **Patient-Specific Factors**: Age, renal/liver function, genetics, comorbidities
