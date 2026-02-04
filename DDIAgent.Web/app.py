@@ -2,6 +2,11 @@
 WEB LAYER: Flask API za DDI Agent
 TANKI transport sloj - samo poziva runner i vraća rezultate
 """
+import os
+import sys
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, PROJECT_ROOT)
 from flask import Flask, jsonify, redirect, request, render_template
 from flask_cors import CORS
 import threading
@@ -9,13 +14,13 @@ import time
 import sys
 import os
 from datetime import datetime  
+from DDIAgent.infrastructure.database import Database
+from DDIAgent.infrastructure.therapy_repository import TherapyRepository
+from DDIAgent.application.services.feedback_service import FeedbackService
 from jinja2 import Environment
 
 
-# ============================================
-# KONFIGURACIJA - FIXIRANE PUTANJE
-# ============================================
-# DIJAGNOSTIKA
+
 print("="*60)
 print("🔍 DIJAGNOSTIKA PUTANJA")
 print("="*60)
@@ -24,7 +29,6 @@ print(f"Trenutna datoteka: {os.path.abspath(__file__)}")
 print(f"Direktorij datoteke: {os.path.dirname(os.path.abspath(__file__))}")
 print("="*60)
 
-# OVO JE KLJUČNO: Koristi Parent 1 umjesto Parent 2
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Parent 1 = InteracTrack
 CENTRAL_DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 
@@ -43,18 +47,12 @@ print(f"DB postoji: {'✅' if os.path.exists(DB_PATH) else '❌'} ({os.path.gets
 print(f"CSV postoji: {'✅' if os.path.exists(CSV_PATH) else '❌'} ({os.path.getsize(CSV_PATH)/1024/1024:.2f} MB)" if os.path.exists(CSV_PATH) else '❌ Ne postoji')
 print("="*60)
 
-# Dodaj DDIAgent u path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from DDIAgent.application.runners.risk_assessment_runner import create_risk_assessment_runner
 
-# ============================================
-# FLASK APLIKACIJA
-# ============================================
 app = Flask(__name__)
 CORS(app)
 
-# Dodajte ovo ispod create_app() ili u postojeći kod
 
 def format_datetime(value, format='%d.%m.%Y %H:%M'):
     """Formatira datetime za template"""
@@ -82,17 +80,13 @@ def reverse_filter(seq):
     except:
         return seq
 
-# ============================================
-# GLOBALNO STANJE
-# ============================================
+
 runner = None
 agent_thread = None
 stop_agent = False
 tick_history = []
 
-# ============================================
-# INICIJALIZACIJA AGENTA
-# ============================================
+
 def initialize_agent():
     """Inicijalizuj DDI agenta"""
     global runner
@@ -130,9 +124,7 @@ def initialize_agent():
     
     return runner
 
-# ============================================
-# AGENT BACKGROUND WORKER
-# ============================================
+
 def agent_background_worker():
     """Pokreće agent tick-ove u pozadini"""
     global runner, stop_agent, tick_history
@@ -178,9 +170,7 @@ def agent_background_worker():
             print(f"❌ Greška u agent tick-u: {e}")
             time.sleep(10)
 
-# ============================================
-# API KONTROLERI (ISTO KAO PRIJE)
-# ============================================
+
 @app.route('/')
 def index():
     """Glavna web stranica"""
@@ -213,7 +203,6 @@ def agent_status():
     is_running = agent_thread is not None and agent_thread.is_alive()
     runner_type = type(runner).__name__ if runner else None
     
-    # Pokušaj dobiti adaptive threshold ako postoji
     adaptive_threshold = None
     if runner and hasattr(runner, 'adaptive_threshold'):
         adaptive_threshold = runner.adaptive_threshold
@@ -249,11 +238,9 @@ def execute_tick():
     try:
         runner = initialize_agent()
         
-        # Agent izvršava JEDAN ciklus
         result = runner.tick()
         
         if result and result.has_work:
-            # Snimi u historiju
             tick_history.append(result.to_dict())
             if len(tick_history) > 50:
                 tick_history.pop(0)
@@ -454,9 +441,7 @@ def test_endpoint():
         "csv_available": os.path.exists(CSV_PATH)
     })
 
-# ============================================
-# NOVI WEB UI ROUTES
-# ============================================
+
 
 @app.route('/therapy/create', methods=['GET'])
 def create_therapy_page():
@@ -474,22 +459,18 @@ def view_therapy_page(therapy_id):
         db = Database(DB_PATH)
         repo = TherapyRepository(db)
         
-        # 1. PRVO: Eksplicitno refresh terapije iz baze
         therapy = repo.find_by_id(therapy_id)
         if therapy:
-            # Eksplicitno refresh da dobijemo najnovije podatke
             therapy = repo.refresh(therapy)
         
         if not therapy:
             return render_template('error.html', 
                                  message=f"Terapija ID {therapy_id} nije pronađena"), 404
         
-        # 2. Inicijalizuj agenta ako već nije
         global runner
         if not runner:
             initialize_agent()
         
-        # 3. Procjeni rizik za ovu terapiju
         assessment = None
         action = None
         warning = None
@@ -503,24 +484,19 @@ def view_therapy_page(therapy_id):
                 source="MANUAL_ASSESSMENT"
             )
             
-            # THINK: Procjeni rizik i donesi odluku
             try:
                 assessment, action = runner._think(percept)
                 
-                # ACT: Kreiraj warning ako je potrebno
                 if action and action.name != "INFORM":
                     warning = runner._act(percept, assessment, action)
                     
-                    # LEARN: Sačuvaj u historiju
                     runner._learn(percept, assessment, warning)
                 else:
-                    # Za INFORM akcije, samo sačuvaj u historiju
                     runner._learn(percept, assessment, None)
                     
             except Exception as e:
                 print(f"Greška pri procjeni terapije {therapy_id}: {e}")
         
-        # 4. Formatiraj podatke za template - UVEK direktno iz atributa
         therapy_data = {
             "id": therapy.id,
             "patient_id": therapy.patient_id,
@@ -543,19 +519,16 @@ def view_therapy_page(therapy_id):
             "risk_history": therapy.risk_history or []
         }
         
-        # 5. Dodaj debug info
         therapy_data["debug_info"] = {
             "feedback_history_length": len(therapy_data["feedback_history"]),
             "timestamp": datetime.now().isoformat(),
             "runner_initialized": runner is not None
         }
         
-        # 6. Formatiraj assessment ako postoji
         assessment_data = None
         if assessment:
             assessment_data = assessment.to_dict()
         
-        # 7. Formatiraj warning ako postoji
         warning_data = None
         if warning:
             warning_data = warning.to_dict()
@@ -577,48 +550,83 @@ def redirect_to_therapy(therapy_id):
     from flask import redirect
     return redirect(f'/therapy/{therapy_id}')
 
-@app.route('/api/warning/<warning_id>/feedback', methods=['POST'])
-def submit_feedback(warning_id):
-    """Korisnik daje feedback na upozorenje"""
+@app.route('/api/feedback/submit', methods=['POST'])
+def submit_feedback_to_runner():
     try:
         data = request.json or request.form
-        feedback_type = data.get('feedback_type', '')  # 'confirmed', 'false_alarm', 'ignored'
+        feedback_type = (data.get('feedback_type') or '').lower()
+        therapy_id = data.get('therapy_id')
         notes = data.get('notes', '')
-        
-        # Ovdje bi trebali ažurirati warning u bazi
-        # Za sada samo logujemo
-        print(f"📝 Feedback primljen za warning {warning_id}: {feedback_type}")
-        
-        # Ažuriraj globalni runner ako postoji
+
+        if not feedback_type:
+            return jsonify({"status": "error", "message": "feedback_type je obavezan"}), 400
+        if not therapy_id:
+            return jsonify({"status": "error", "message": "therapy_id je obavezan"}), 400
+
+        db = Database(DB_PATH)
+        repo = TherapyRepository(db)
+
         global runner
-        if runner and hasattr(runner, 'user_feedback_history'):
-            runner.user_feedback_history.append({
-                'warning_id': warning_id,
-                'feedback_type': feedback_type,
-                'notes': notes,
-                'timestamp': time.strftime("%Y-%m-%d %H:%M:%S")
-            })
-            
-            # Adaptacija na osnovu feedbacka
-            if feedback_type == 'ignored' and hasattr(runner, 'adaptive_threshold'):
-                runner.adaptive_threshold += 0.1  # Postani manje osjetljiv
-                print(f"📈 Prag povećan na {runner.adaptive_threshold:.2f} zbog ignorisanog upozorenja")
-            elif feedback_type == 'confirmed' and hasattr(runner, 'adaptive_threshold'):
-                runner.adaptive_threshold = max(1.0, runner.adaptive_threshold - 0.1)  # Postani osjetljiviji
-                print(f"📉 Prag smanjen na {runner.adaptive_threshold:.2f} zbog potvrđenog upozorenja")
-        
+        service = FeedbackService(db=db, repo=repo, runner=runner)
+
+        result = service.submit_feedback(int(therapy_id), feedback_type, notes)
+
+        if result.status != "success":
+            return jsonify({
+                "status": "error",
+                "message": result.message,
+                "error": result.error
+            }), 400 if result.error == "invalid_feedback_type" else 404 if result.error in ("therapy_not_found", "therapy_reload_failed") else 500
+
+        return jsonify({
+            "status": "success",
+            "message": result.message,
+            "therapy": result.therapy_snapshot,
+            "agent_learning": {
+                "learning_applied": result.learning_applied,
+                "adaptive_threshold_before": result.threshold_before,
+                "adaptive_threshold_after": result.threshold_after,
+                "threshold_change": result.threshold_change
+            }
+        })
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+@app.route('/api/warning/<warning_id>/feedback', methods=['POST'])
+def submit_feedback(warning_id):
+    try:
+        data = request.json or request.form
+        feedback_type = (data.get('feedback_type') or '').lower()
+        therapy_id = data.get('therapy_id')  
+        notes = data.get('notes', '')
+
+        if not therapy_id:
+            return jsonify({"status": "error", "message": "therapy_id je obavezan"}), 400
+
+        db = Database(DB_PATH)
+        repo = TherapyRepository(db)
+
+        global runner
+        service = FeedbackService(db=db, repo=repo, runner=runner)
+
+        result = service.submit_feedback(int(therapy_id), feedback_type, notes)
+
+        if result.status != "success":
+            return jsonify({"status": "error", "message": result.message}), 400
+
         return jsonify({
             "status": "success",
             "message": "Hvala na povratnoj informaciji!",
             "warning_id": warning_id,
-            "feedback_type": feedback_type
+            "feedback_type": feedback_type,
+            "agent_learning": {
+                "threshold_change": result.threshold_change,
+                "adaptive_threshold_after": result.threshold_after
+            }
         })
-        
+
     except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/dashboard', methods=['GET'])
 def dashboard_page():
@@ -761,118 +769,6 @@ def therapies_page():
                              message=f"Greška pri učitavanju terapija: {str(e)}"), 500
 
 
-
-@app.route('/api/feedback/submit', methods=['POST'])
-def submit_feedback_to_runner():
-    """Feedback endpoint koji direktno poziva runnerov learn_from_feedback"""
-    try:
-        data = request.json or request.form
-        feedback_type = data.get('feedback_type', '').lower()
-        therapy_id = data.get('therapy_id')
-        notes = data.get('notes', '')
-        
-        if not feedback_type:
-            return jsonify({
-                "status": "error",
-                "message": "feedback_type je obavezan (confirmed/false_alarm/ignored)"
-            }), 400
-        
-        if not therapy_id:
-            return jsonify({
-                "status": "error",
-                "message": "therapy_id je obavezan"
-            }), 400
-        
-        # Validiraj feedback_type
-        valid_types = ['confirmed', 'false_alarm', 'ignored']
-        if feedback_type not in valid_types:
-            return jsonify({
-                "status": "error",
-                "message": f"feedback_type mora biti jedan od: {', '.join(valid_types)}"
-            }), 400
-        
-        from DDIAgent.infrastructure.database import Database
-        from DDIAgent.infrastructure.therapy_repository import TherapyRepository
-        
-        db = Database(DB_PATH)
-        repo = TherapyRepository(db)
-        
-        # 1. PRVO: Ažuriraj feedback u bazi (JEDAN PUT!)
-        success = repo.update_feedback_counts(int(therapy_id), feedback_type, notes)
-        
-        if not success:
-            return jsonify({
-                "status": "error",
-                "message": f"Terapija {therapy_id} nije pronađena"
-            }), 404
-        
-        # 2. DRUGO: Učitaj ažuriranu terapiju
-        therapy = repo.find_by_id(int(therapy_id))
-        
-        if not therapy:
-            return jsonify({
-                "status": "error",
-                "message": f"Terapija {therapy_id} nije pronađena nakon ažuriranja"
-            }), 404
-        
-        # 3. TREĆE: Pozovi runner za učenje (ako postoji)
-        global runner
-        agent_learning_data = {}
-        
-        if runner:
-            # Odredi severity na osnovu posljednje procjene
-            warning_severity = "MEDIUM"
-            if therapy.risk_history:
-                latest = therapy.risk_history[-1]
-                warning_severity = latest.get('risk_level', 'MEDIUM')
-            
-            print(f"[FEEDBACK] Pozivam runner.learn_from_feedback za terapiju {therapy.id}, feedback: {feedback_type}")
-            
-            try:
-                if hasattr(runner, 'learn_from_feedback'):
-                    # SAMO prilagodi prag, NE ažuriraj terapiju ponovo
-                    runner._adjust_threshold_from_feedback(feedback_type, warning_severity)
-                    runner._update_learning_stats(feedback_type)
-                    runner._save_threshold_to_db()
-                    
-                    # Prikupi podatke o učenju
-                    agent_learning_data = {
-                        "adaptive_threshold": runner.adaptive_threshold if hasattr(runner, 'adaptive_threshold') else None,
-                        "learning_applied": True,
-                        "feedback_type": feedback_type
-                    }
-                    print(f"[FEEDBACK] Runner je učio iz feedback-a, novi prag: {runner.adaptive_threshold}")
-                else:
-                    agent_learning_data = {"learning_applied": False, "reason": "runner nema learn_from_feedback"}
-                    
-            except Exception as e:
-                print(f"[FEEDBACK] Greška u runner.learn_from_feedback: {e}")
-                agent_learning_data = {"learning_applied": False, "error": str(e)}
-        else:
-            agent_learning_data = {"learning_applied": False, "reason": "runner nije inicijaliziran"}
-        
-        # 4. Vrati success response
-        return jsonify({
-            "status": "success",
-            "message": "Feedback uspješno primljen! Agent će učiti iz vašeg odgovora.",
-            "therapy": {
-                "id": therapy.id,
-                "patient_id": therapy.patient_id,
-                "confirmed_warnings": getattr(therapy, 'confirmed_warnings_count', 0),
-                "false_alarms": getattr(therapy, 'false_alarms_count', 0),
-                "ignored_warnings": therapy.ignored_warnings_count,
-                "total_feedback": len(getattr(therapy, 'feedback_history', []))
-            },
-            "feedback_saved": True,
-            "agent_learning": agent_learning_data
-        })
-        
-    except Exception as e:
-        print(f"❌ Greška pri slanju feedback-a: {e}")
-        return jsonify({
-            "status": "error",
-            "message": f"Greška pri slanju feedback-a: {str(e)}"
-        }), 500
     
 @app.route('/api/debug/runner-state', methods=['GET'])
 def debug_runner_state():
@@ -932,7 +828,6 @@ def feedback_success_page():
         repo = TherapyRepository(db)
         therapy = repo.find_by_id(int(therapy_id)) if therapy_id.isdigit() else None
         
-        # DODAJ OVO: Nakon što pronadješ terapiju, provjeri feedback statistike
         if therapy:
             # Pripremi dictionary sa ažuriranim statistikama
             therapy_data = {
@@ -955,7 +850,7 @@ def feedback_success_page():
                 ],
                 "risk_history": therapy.risk_history or []
             }
-            # Proslijedi dictionary umjesto ORM objekta
+           
             therapy = therapy_data
     except Exception as e:
         print(f"Greška pri učitavanju terapije: {e}")
@@ -1331,9 +1226,7 @@ def execute_tick_page():
                              result=error_data,
                              timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-# ============================================
-# ERROR HANDLER
-# ============================================
+
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -1343,9 +1236,7 @@ def page_not_found(e):
 def internal_server_error(e):
     return render_template('error.html', message="Interna serverska greška"), 500
 
-# ============================================
-# POKRETANJE
-# ============================================
+
 if __name__ == '__main__':
     try:
         # Inicijalizuj agenta
