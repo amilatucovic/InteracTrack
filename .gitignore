@@ -80,3 +80,26 @@ Thumbs.db
 
 # Migration backups
 *.backup
+
+# VS / Rider
+.vs/
+bin/
+obj/
+
+# Node (preventivno)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python type check / lint caches
+.mypy_cache/
+.pytype/
+.pyright/
+ruff_cache/
+
+# SQLite journals
+*.db-journal
+*.sqlite-journal
+
+
