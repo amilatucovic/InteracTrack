@@ -55,7 +55,7 @@ InteracTrack combines three types of agents:
 - **Local Learning**: Builds trust for specific therapy patterns
 - **Feedback Integration**: Adjusts behavior based on clinician responses
 
-## 📊 Dataset
+## Dataset
 
 **Source:** [Drug-Drug Interaction Dataset (Mendeley Data)](https://data.mendeley.com/datasets/md5czfsfnd/1)  
 **Origin:** DrugBank Database
@@ -137,24 +137,7 @@ http://localhost:5000
 
 The SQLite database is automatically created and used locally - no additional database configuration required.
 
-## Future Enhancements
-
-### Short-term
-- **Patient-Specific Factors**: Age, renal/liver function, genetics, comorbidities
-- **Enhanced Explanations**: Why agent made specific decisions
-- **Confidence Scoring**: Quantified certainty levels
-
-### Medium-term
-- **Multi-Agent Architecture**: Specialized agents for scanning, assessment, validation, notification
-- **Explainable AI (XAI)**: Detailed reasoning behind decisions
-- **Alternative Therapy Suggestions**: Safer drug combinations
-
-### Long-term
-- **External System Integration**: HL7/FHIR API, DrugBank API, SNOMED CT
-- **Predictive Analytics**: Adverse reaction prediction, trend analysis
-- **Real-time Monitoring Dashboard**: Live streams, geospatial risk visualization
-
-## ⚠️ Important Disclaimers
+## Important Disclaimers
 
 1. **Medical Disclaimer**: This agent is for educational purposes only. It does NOT replace consultation with a physician or pharmacist. Always consult healthcare professionals.
 
@@ -164,11 +147,11 @@ The SQLite database is automatically created and used locally - no additional da
 
 This project was created for educational purposes as part of university coursework.
 
-## 👤 Author
+## Author
 
 **Amila Tucović**
 - Institution: Faculty of Information Technologies, University "Džemal Bijedić"
 - GitHub: [@amilatucovic](https://github.com/amilatucovic)
 ---
 
-⭐ **If you find this project helpful or interesting, please consider giving it a star!**
+**If you find this project helpful or interesting, please consider giving it a star!**
